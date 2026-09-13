@@ -11,6 +11,15 @@ An open-source, portable real-time air traffic radar for FPV drone pilots, gener
 
 ---
 
+## 🎬 Video Demonstration
+
+[![FPV Safety Radar Demonstration](https://img.youtube.com/vi/Zo9jX7ui7-g/maxresdefault.jpg)](https://www.youtube.com/watch?v=Zo9jX7ui7-g)
+
+> **[▶ Watch the Demonstration Video on YouTube](https://www.youtube.com/watch?v=Zo9jX7ui7-g)**  
+> *Demonstrating the main menu navigation, Wi-Fi configuration portal, target alert settings, and live tactical radar scope on the ESP32 CYD.*
+
+---
+
 ## 🌟 Key Features
 
 * **Retro Tactical Radar Scope**:
@@ -62,7 +71,7 @@ An open-source, portable real-time air traffic radar for FPV drone pilots, gener
 1. Install [VS Code](https://code.visualstudio.com/) and the **PlatformIO IDE Extension**.
 2. Clone or download this repository:
    ```bash
-   git clone https://github.com/<YOUR_USERNAME>/fpv-safety-radar.git
+   git clone https://github.com/x-actly/fpv-safety-radar.git
    cd fpv-safety-radar
    ```
 3. Open the project folder in VS Code / PlatformIO.
