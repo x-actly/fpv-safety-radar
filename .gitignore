@@ -1,0 +1,19 @@
+# PlatformIO
+.pio
+.piobuild
+.piolibdeps
+*.pyc
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build Artifacts
+build/
+bin/

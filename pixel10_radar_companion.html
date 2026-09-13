@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel 10 Radar GPS Companion</title>
+    <style>
+        :root {
+            --bg-color: #0a0e14;
+            --card-bg: #121820;
+            --accent-green: #00ff66;
+            --accent-cyan: #00e5ff;
+            --accent-yellow: #ffcc00;
+            --text-color: #e0e6ed;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background-color: var(--card-bg);
+            border: 2px solid var(--accent-green);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 255, 102, 0.15);
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--accent-green);
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: #8899a6;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: 1px solid var(--accent-cyan);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent-green);
+            color: #000;
+            font-weight: bold;
+            font-size: 1.05rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .status-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #223344;
+        }
+
+        .status-title {
+            font-size: 0.8rem;
+            color: #8899a6;
+            text-transform: uppercase;
+        }
+
+        .status-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-yellow);
+            margin: 6px 0;
+        }
+
+        .grid-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .info-card {
+            background: #0d131a;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #1b2836;
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            color: #657786;
+        }
+
+        .info-val {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #fff;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pixel 10 Radar Streamer</h1>
+        <div class="subtitle">FPV Safety Radar Companion</div>
+
+        <div class="input-group">
+            <label for="espIp">ESP32 Radar IP-Adresse</label>
+            <input type="text" id="espIp" value="10.92.168.35" placeholder="z.B. 10.92.168.35">
+        </div>
+
+        <button id="startBtn" class="btn" onclick="toggleStreaming()">GPS Streaming Starten</button>
+
+        <div class="status-box">
+            <div class="status-title">Übertragungs-Status</div>
+            <div id="statusVal" class="status-value">INAKTIV</div>
+            
+            <div class="grid-info">
+                <div class="info-card">
+                    <div class="info-label">Breitengrad (Lat)</div>
+                    <div id="latVal" class="info-val">--</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Längengrad (Lon)</div>
+                    <div id="lonVal" class="info-val">--</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Höhe</div>
+                    <div id="altVal" class="info-val">-- ft</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Pakete Gesendet</div>
+                    <div id="countVal" class="info-val">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isStreaming = false;
+        let watchId = null;
+        let sentCount = 0;
+
+        function toggleStreaming() {
+            if (!isStreaming) {
+                startGps();
+            } else {
+                stopGps();
+            }
+        }
+
+        function startGps() {
+            if (!("geolocation" in navigator)) {
+                alert("GPS wird von deinem Browser nicht unterstützt.");
+                return;
+            }
+
+            const btn = document.getElementById("startBtn");
+            const status = document.getElementById("statusVal");
+
+            status.innerText = "GPS WIRD GESUCHT...";
+            status.style.color = "#ffcc00";
+
+            watchId = navigator.geolocation.watchPosition(
+                function(pos) {
+                    isStreaming = true;
+                    btn.innerText = "GPS Streaming Stoppen";
+                    btn.style.background = "#ff3366";
+                    btn.style.color = "#fff";
+
+                    status.innerText = "LIVE TRANSMITTING 📡";
+                    status.style.color = "#00ff66";
+
+                    let lat = pos.coords.latitude;
+                    let lon = pos.coords.longitude;
+                    let alt = Math.round((pos.coords.altitude || 0) * 3.28084);
+
+                    document.getElementById("latVal").innerText = lat.toFixed(5);
+                    document.getElementById("lonVal").innerText = lon.toFixed(5);
+                    document.getElementById("altVal").innerText = alt + " ft";
+
+                    sendToEsp32(lat, lon, alt);
+                },
+                function(err) {
+                    status.innerText = "GPS FEHLER: " + err.message;
+                    status.style.color = "#ff3366";
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 1000,
+                    timeout: 5000
+                }
+            );
+        }
+
+        function stopGps() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            isStreaming = false;
+            const btn = document.getElementById("startBtn");
+            const status = document.getElementById("statusVal");
+
+            btn.innerText = "GPS Streaming Starten";
+            btn.style.background = "#00ff66";
+            btn.style.color = "#000";
+
+            status.innerText = "INAKTIV";
+            status.style.color = "#ffcc00";
+        }
+
+        function sendToEsp32(lat, lon, alt) {
+            let ip = document.getElementById("espIp").value.trim();
+            if (!ip) return;
+
+            // Direct HTTP GET request using Image ping (100% bypasses Chrome CORS & Security restrictions)
+            let img = new Image();
+            img.src = "http://" + ip + "/setgps?lat=" + lat + "&lon=" + lon + "&alt=" + alt + "&t=" + Date.now();
+            sentCount++;
+            document.getElementById("countVal").innerText = sentCount;
+        }
+    </script>
+</body>
+</html>
